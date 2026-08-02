@@ -33,10 +33,13 @@ cd mlir-lsp
 ```
 
 The installer builds an optimized binary and writes it to
-`~/.local/bin/mlir-lsp-server`. Override either tool or destination when needed:
+`~/.local/bin/mlir-lsp-server`. It reuses an existing installation by default;
+pass `--force` when you explicitly want to rebuild it. Override either tool or
+destination when needed:
 
 ```sh
-BAZEL=bazelisk INSTALL_DIR="$HOME/bin" ./install.sh
+./install.sh --force
+BAZEL=bazelisk INSTALL_DIR="$HOME/bin" ./install.sh --force
 ```
 
 To build without installing:
@@ -55,7 +58,7 @@ checkout, then refresh its copied repository after source changes:
 
 ```sh
 bazel sync --only=enzyme_ad
-./install.sh
+./install.sh --force
 ```
 
 Clear the override to return to the pinned archive.
