@@ -1,6 +1,21 @@
 # mlir-lsp
 
-An opinionated MLIR LSP server
+An opinionated MLIR LSP server.
+
+Dialects supported:
+
+- Built-in MLIR dialects (`affine`, `arith`, `async`, `cf`, `complex`, `dlti`,
+  `func`, `gpu`, `linalg`, `llvm`, `math`, `memref`, `nvgpu`, `nvvm`, `omp`,
+  `pdl`, `rocdl`, `scf`, `sparse_tensor`, `tensor`, `transform`, `ub`, and
+  `vector`)
+- StableHLO and related dialects (`stablehlo`, `chlo`, `mhlo`, `check`, and
+  `interpreter`)
+- Enzyme dialects (`enzyme` and `impulse`)
+- Enzyme-XLA dialects (`enzymexla`, `comm`, `distributed`, `tessera`,
+  `perfify`, and `triton_ext`)
+- Shardy (`sdy`)
+- Triton and CUDA Tile (`triton`, `triton_gpu`, `triton_nvidia_gpu`, and
+  `cuda_tile`)
 
 ## Install
 
