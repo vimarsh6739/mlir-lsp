@@ -3,17 +3,17 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load(
     "//:workspace.bzl",
-    "ENZYMEXLA_COMMIT",
-    "ENZYMEXLA_SHA256",
-    "OVERRIDE_ENZYMEXLA_PATH",
+    "ENZYME_JAX_COMMIT",
+    "ENZYME_JAX_SHA256",
+    "OVERRIDE_ENZYME_JAX_PATH",
 )
 
 def _enzyme_ad_local_impl(ctx):
     # Local override uses a copied snapshot instead of native.local_repository so we
     # can apply the same patch-label rewrites as the http_archive path.
     # Workflow:
-    # - Normal usage: leave OVERRIDE_ENZYMEXLA_PATH empty (http_archive).
-    # - Local debugging: set OVERRIDE_ENZYMEXLA_PATH, edit local Enzyme-JAX, then run
+    # - Normal usage: leave OVERRIDE_ENZYME_JAX_PATH empty (http_archive).
+    # - Local debugging: set OVERRIDE_ENZYME_JAX_PATH, edit local Enzyme-JAX, then run
     #   `bazel sync --only=enzyme_ad` to refresh this copied snapshot.
     # - If @enzyme inside Enzyme-JAX points to a local path (OVERRIDE_ENZYME_PATH),
     #   edits in that local Enzyme checkout are visible directly; no enzyme_ad resync
@@ -41,10 +41,10 @@ _enzyme_ad_local_repository = repository_rule(
 )
 
 def repo():
-    if len(OVERRIDE_ENZYMEXLA_PATH) != 0:
+    if len(OVERRIDE_ENZYME_JAX_PATH) != 0:
         _enzyme_ad_local_repository(
             name = "enzyme_ad",
-            path = OVERRIDE_ENZYMEXLA_PATH,
+            path = OVERRIDE_ENZYME_JAX_PATH,
         )
     else:
         http_archive(
@@ -55,7 +55,7 @@ sed -i.bak0 "s/\\\\\\\\\\\\\\\\\\/\\\\\\\\\\\\\\\\\\/:patches/@enzyme_ad\\\\\\\\
 sed -i.bak0 "s,//:patches,@enzyme_ad//:patches,g" third_party/*/workspace.bzl
 """,
             ],
-            sha256 = ENZYMEXLA_SHA256,
-            strip_prefix = "Enzyme-JAX-" + ENZYMEXLA_COMMIT,
-            urls = ["https://github.com/EnzymeAD/Enzyme-JAX/archive/{commit}.tar.gz".format(commit = ENZYMEXLA_COMMIT)],
+            sha256 = ENZYME_JAX_SHA256,
+            strip_prefix = "Enzyme-JAX-" + ENZYME_JAX_COMMIT,
+            urls = ["https://github.com/EnzymeAD/Enzyme-JAX/archive/{commit}.tar.gz".format(commit = ENZYME_JAX_COMMIT)],
         )

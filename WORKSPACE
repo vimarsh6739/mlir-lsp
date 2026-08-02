@@ -1,17 +1,22 @@
+workspace(name = "mlir_lsp")
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 SKYLIB_VERSION = "1.8.2"
+
 maybe(
     http_archive,
     name = "bazel_skylib",
     sha256 = "6e78f0e57de26801f6f564fa7c4a48dc8b36873e416257a92bbb0937eeac8446",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/{version}/bazel-skylib-{version}.tar.gz".format(version=SKYLIB_VERSION),
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/{version}/bazel-skylib-{version}.tar.gz".format(version=SKYLIB_VERSION),
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/{version}/bazel-skylib-{version}.tar.gz".format(version = SKYLIB_VERSION),
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/{version}/bazel-skylib-{version}.tar.gz".format(version = SKYLIB_VERSION),
     ],
 )
+
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
 bazel_skylib_workspace()
 
 maybe(
@@ -20,24 +25,28 @@ maybe(
     sha256 = "1ae6fcf983cff3edab717636f91ad0efff2e5ba75607fdddddfd6ad0dbdfaf10",
     url = "https://github.com/bazelbuild/apple_support/releases/download/1.24.5/apple_support.1.24.5.tar.gz",
 )
+
 load(
     "@build_bazel_apple_support//lib:repositories.bzl",
     "apple_support_dependencies",
 )
+
 apple_support_dependencies()
 
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
+
 bazel_features_deps()
 
 maybe(
     http_archive,
     name = "platforms",
+    sha256 = "3384eb1c30762704fbe38e440204e114154086c8fc8a8c2e3e28441028c019a8",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/1.0.0/platforms-1.0.0.tar.gz",
         "https://github.com/bazelbuild/platforms/releases/download/1.0.0/platforms-1.0.0.tar.gz",
     ],
-    sha256 = "3384eb1c30762704fbe38e440204e114154086c8fc8a8c2e3e28441028c019a8",
 )
+
 maybe(
     http_archive,
     name = "rules_cc",
@@ -45,7 +54,9 @@ maybe(
     strip_prefix = "rules_cc-0.2.11",
     url = "https://github.com/bazelbuild/rules_cc/releases/download/0.2.11/rules_cc-0.2.11.tar.gz",
 )
+
 load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
+
 compatibility_proxy_repo()
 
 maybe(
@@ -55,13 +66,17 @@ maybe(
     strip_prefix = "rules_shell-0.6.1",
     url = "https://github.com/bazelbuild/rules_shell/releases/download/v0.6.1/rules_shell-v0.6.1.tar.gz",
 )
+
 load("@rules_shell//shell:repositories.bzl", "rules_shell_dependencies", "rules_shell_toolchains")
+
 rules_shell_dependencies()
+
 rules_shell_toolchains()
 
-# Load Enzyme-JAX, configure llvm
-load("//third_party/enzyme_ad:workspace.bzl", enzymexla_workspace = "repo")
-enzymexla_workspace()
+# Load Enzyme-JAX, configure LLVM.
+load("//third_party/enzyme_ad:workspace.bzl", enzyme_jax_workspace = "repo")
+
+enzyme_jax_workspace()
 
 NEW_XLA_PATCHES = []
 
@@ -69,29 +84,35 @@ LLVM_TARGETS = [
     "AArch64",
     "AMDGPU",
     "NVPTX",
-    "X86"
+    "X86",
 ]
 
 load("@enzyme_ad//third_party/ml_toolchain:workspace.bzl", ml_toolchain_workspace = "repo")
-
 load("@enzyme_ad//third_party/jax:workspace.bzl", jax_workspace = "repo")
+
 jax_workspace([])
 
 load("@enzyme_ad//third_party/xla:workspace.bzl", xla_workspace = "repo")
+
 xla_workspace(NEW_XLA_PATCHES)
 
 load("@enzyme_ad//third_party/enzyme:workspace.bzl", enzyme_workspace = "repo")
 load("@enzyme_ad//third_party/cuda_tile:workspace.bzl", cuda_tile_workspace = "repo")
+
 enzyme_workspace()
+
 cuda_tile_workspace("@enzyme_ad")
 
 load("@jax//third_party/xla:workspace.bzl", jax_xla_workspace = "repo")
+
 jax_xla_workspace()
 
 load("@xla//:workspace4.bzl", "xla_workspace4")
+
 xla_workspace4()
 
 load("@xla//:workspace3.bzl", "xla_workspace3")
+
 xla_workspace3()
 
 ml_toolchain_workspace()
@@ -101,9 +122,11 @@ load("@rules_ml_toolchain//cc/deps:cc_toolchain_deps.bzl", "cc_toolchain_deps")
 cc_toolchain_deps()
 
 load("@xla//third_party/py:python_init_rules.bzl", "python_init_rules")
+
 python_init_rules()
 
 load("@xla//third_party/py:python_init_repositories.bzl", "python_init_repositories")
+
 python_init_repositories(
     local_wheel_inclusion_list = [
         "enzyme_ad*",
@@ -116,41 +139,56 @@ python_init_repositories(
 )
 
 load("@xla//third_party/py:python_init_toolchains.bzl", "python_init_toolchains")
+
 python_init_toolchains()
 
 load("@xla//third_party/py:python_init_pip.bzl", "python_init_pip")
+
 python_init_pip()
 
 load("@pypi//:requirements.bzl", "install_deps")
+
 install_deps()
 
 load("@xla//:workspace2.bzl", "xla_workspace2")
+
 xla_workspace2()
 
 load("@xla//third_party/llvm:workspace.bzl", llvm = "repo")
-llvm("llvm-raw")
-load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
-llvm_configure(name = "llvm-project", targets = LLVM_TARGETS)
 
+llvm("llvm-raw")
+
+load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
+
+llvm_configure(
+    name = "llvm-project",
+    targets = LLVM_TARGETS,
+)
 
 load("@xla//:workspace1.bzl", "xla_workspace1")
+
 xla_workspace1()
 
 load("@xla//:workspace0.bzl", "xla_workspace0")
+
 xla_workspace0()
 
 load("@jax//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
+
 flatbuffers()
 
 load("@jax//third_party/external_deps:workspace.bzl", "external_deps_repository")
+
 external_deps_repository(name = "rocm_external_test_deps")
 
 load("@jax//:test_shard_count.bzl", "test_shard_count_repository")
+
 test_shard_count_repository(
     name = "test_shard_count",
 )
 
 load("@jax//jaxlib:jax_python_wheel.bzl", "jax_python_wheel_repository")
+
 jax_python_wheel_repository(
     name = "jax_wheel",
     version_key = "_version",
@@ -222,7 +260,6 @@ load(
     "@rules_ml_toolchain//gpu/cuda:cuda_redist_versions.bzl",
     "REDIST_VERSIONS_TO_BUILD_TEMPLATES",
 )
-
 load("@xla//third_party/cccl:workspace.bzl", "CCCL_3_2_0_DIST_DICT", "CCCL_GITHUB_VERSIONS_TO_BUILD_TEMPLATES")
 
 cuda_redist_init_repositories(
@@ -275,17 +312,26 @@ nvshmem_redist_init_repository(
     nvshmem_redistributions = NVSHMEM_REDISTRIBUTIONS,
 )
 
-# compile_commands
+# Enzyme-JAX's root BUILD file loads these helpers unconditionally.
 http_archive(
     name = "hedron_compile_commands",
-    url = "https://github.com/vimarsh6739/bazel-compile-commands-extractor/archive/359a657680aa74d2a70240bb310c1636601e0af8.tar.gz",
+    sha256 = "0bc358dd0627169409ae48be6b431509c13d3150ad15cd18555bac2db17cca24",
     strip_prefix = "bazel-compile-commands-extractor-359a657680aa74d2a70240bb310c1636601e0af8",
+    url = "https://github.com/vimarsh6739/bazel-compile-commands-extractor/archive/359a657680aa74d2a70240bb310c1636601e0af8.tar.gz",
 )
+
 load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
+
 hedron_compile_commands_setup()
+
 load("@hedron_compile_commands//:workspace_setup_transitive.bzl", "hedron_compile_commands_setup_transitive")
+
 hedron_compile_commands_setup_transitive()
+
 load("@hedron_compile_commands//:workspace_setup_transitive_transitive.bzl", "hedron_compile_commands_setup_transitive_transitive")
+
 hedron_compile_commands_setup_transitive_transitive()
+
 load("@hedron_compile_commands//:workspace_setup_transitive_transitive_transitive.bzl", "hedron_compile_commands_setup_transitive_transitive_transitive")
+
 hedron_compile_commands_setup_transitive_transitive_transitive()
