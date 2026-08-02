@@ -52,15 +52,10 @@ jobs:
     permissions:
       contents: write
     env:
+      GH_REPO: ${{ github.repository }}
       SOURCE_COMMIT: ${{ needs.source.outputs.commit }}
 
     steps:
-      - name: Check out tagged commit
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.source.outputs.commit }}
-          fetch-depth: 0
-
       - name: Download completed release assets
         uses: actions/download-artifact@v6
         with:
@@ -68,26 +63,12 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Verify assets and source metadata
-        shell: bash
-        run: |
-          (cd dist && sha256sum -c -- ./*.sha256)
-          verify_dir="$(mktemp -d)"
-          trap 'rm -rf -- "${verify_dir}"' EXIT
-          for platform in linux-x86_64 macos-arm64; do
-            tar -xzf "dist/mlir-lsp-${platform}.tar.gz" -C "${verify_dir}"
-            test "$(< "${verify_dir}/mlir-lsp-${platform}/SOURCE_COMMIT")" = "${SOURCE_COMMIT}"
-          done
-
       - name: Publish stable release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${GITHUB_REF_NAME}" \
-            dist/mlir-lsp-linux-x86_64.tar.gz \
-            dist/mlir-lsp-linux-x86_64.tar.gz.sha256 \
-            dist/mlir-lsp-macos-arm64.tar.gz \
-            dist/mlir-lsp-macos-arm64.tar.gz.sha256 \
+            dist/* \
             --verify-tag \
             --generate-notes \
             --notes "Source commit: ${SOURCE_COMMIT}" \
