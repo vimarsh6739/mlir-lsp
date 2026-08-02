@@ -7,14 +7,14 @@ install_dir="${HOME}/.local/bin"
 
 cd "${workspace_dir}"
 "${bazel_command}" build --config=public_cache \
-  //:copy-enzymexla-lsp-server \
+  //:mlir-lsp-server \
   //:write-enzymexla-source-mode
 source_mode="$(<"${workspace_dir}/bazel-bin/enzymexla-source-mode")"
 
 mkdir -p "${install_dir}"
 install -m 755 \
-  "${workspace_dir}/bazel-bin/enzymexla-lsp-server" \
-  "${install_dir}/enzymexla-lsp-server"
+  "${workspace_dir}/bazel-bin/mlir-lsp-server" \
+  "${install_dir}/mlir-lsp-server"
 
 case "${source_mode}" in
   archive)
