@@ -14,8 +14,8 @@ LLVM_TARGETS = [
     "X86",
 ]
 
-load("@enzyme_ad//third_party/ml_toolchain:workspace.bzl", ml_toolchain_workspace = "repo")
 load("@enzyme_ad//third_party/jax:workspace.bzl", jax_workspace = "repo")
+load("@enzyme_ad//third_party/ml_toolchain:workspace.bzl", ml_toolchain_workspace = "repo")
 
 jax_workspace([])
 
@@ -23,8 +23,8 @@ load("@enzyme_ad//third_party/xla:workspace.bzl", xla_workspace = "repo")
 
 xla_workspace(NEW_XLA_PATCHES)
 
-load("@enzyme_ad//third_party/enzyme:workspace.bzl", enzyme_workspace = "repo")
 load("@enzyme_ad//third_party/cuda_tile:workspace.bzl", cuda_tile_workspace = "repo")
+load("@enzyme_ad//third_party/enzyme:workspace.bzl", enzyme_workspace = "repo")
 
 enzyme_workspace()
 
@@ -122,9 +122,9 @@ jax_python_wheel_repository(
     version_source = "@jax//jax:version.py",
 )
 
+load("@jax//third_party/rocm_wheels:workspace.bzl", "rocm_wheels_repository")
 load("@jax_wheel//:wheel.bzl", "WHEEL_VERSION")
 load("@python_version_repo//:py_version.bzl", "HERMETIC_PYTHON_VERSION")
-load("@jax//third_party/rocm_wheels:workspace.bzl", "rocm_wheels_repository")
 
 # Pre-built ROCm wheels from a GitHub release (ROCm/rocm-jax).
 rocm_wheels_repository(
@@ -142,8 +142,6 @@ external_deps_repository(
         "@rocm_wheels//:rocm_plugin_py_import",
     ],
 )
-
-load("@jax//jaxlib:jax_python_wheel.bzl", "jax_python_wheel_repository")
 
 jax_python_wheel_repository(
     name = "jax_wheel",

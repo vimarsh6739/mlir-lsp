@@ -8,7 +8,7 @@ import modal
 
 
 # Leave headroom over the resource usage observed in initial release builds.
-CPU_CORES = 8.0
+CPU_CORES = 16.0
 MEMORY_MIB = 32 * 1024
 
 cache_volume = modal.Volume.from_name("mlir-lsp-bazel-cache", create_if_missing=True)

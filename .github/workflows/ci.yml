@@ -25,6 +25,14 @@ jobs:
       - name: Check shell syntax
         run: bash -n install.sh scripts/*.sh
 
+      - name: Check Bazel formatting
+        run: |
+          curl -fsSL \
+            https://github.com/bazelbuild/buildtools/releases/download/v8.5.1/buildifier-linux-amd64 \
+            -o /tmp/buildifier
+          chmod +x /tmp/buildifier
+          /tmp/buildifier -mode=check -lint=off -r .
+
       - name: Check Lua formatting
         uses: JohnnyMorganz/stylua-action@v4
         with:
