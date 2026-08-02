@@ -22,9 +22,8 @@ TableGen or C++ implementations.
 
 ## Build and install
 
-The source build requires Bazel or Bazelisk, a C++ toolchain, and approximately
-the same resources as an LLVM/MLIR build. The repository pins Bazel 7.7.0 and
-uses Enzyme's public read-only Bazel cache.
+The source build requires `bazel` on `PATH`, a C++ toolchain, and approximately
+the same resources as an LLVM/MLIR build. The repository pins Bazel 7.7.0.
 
 ```sh
 git clone https://github.com/vimarsh6739/mlir-lsp.git
@@ -33,21 +32,20 @@ cd mlir-lsp
 ```
 
 The installer builds an optimized binary and writes it to
-`~/.local/bin/mlir-lsp-server`. Override either tool or destination when needed:
+`~/.local/bin/mlir-lsp-server`. Override the destination when needed:
 
 ```sh
-BAZEL=bazelisk INSTALL_DIR="$HOME/bin" ./install.sh
+INSTALL_PREFIX="$HOME/bin" ./install.sh
 ```
 
 To build without installing:
 
 ```sh
-bazel build --config=public_cache //:mlir-lsp-server
+bazel build //:mlir-lsp-server
 ./bazel-bin/mlir-lsp-server --help
 ```
 
-Build outputs are retained for fast incremental updates. The installer shuts
-down its Bazel server when it finishes.
+Build outputs are retained for fast incremental updates.
 
 ### Local Enzyme-JAX development
 
