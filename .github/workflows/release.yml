@@ -65,19 +65,115 @@ jobs:
             echo "tag=${tag}"
           } >> "${GITHUB_OUTPUT}"
 
-  build:
-    name: Build release assets
+  linux:
+    name: Linux x86-64 (Modal)
     if: needs.source.outputs.should_build == 'true'
     needs: source
-    uses: ./.github/workflows/build-release-assets.yml
-    with:
-      source_ref: ${{ needs.source.outputs.commit }}
-    secrets: inherit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 370
+    env:
+      MODAL_ENVIRONMENT: ${{ vars.MODAL_ENVIRONMENT }}
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Modal client
+        run: python -m pip install "modal>=1.3,<2"
+
+      - name: Build, test, inspect, and package on Modal
+        run: |
+          modal run .github/modal/build_linux.py \
+            --source-commit "${{ needs.source.outputs.commit }}" \
+            --run-id "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-linux" \
+            --output-dir dist
+
+      - name: Upload Linux release assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: mlir-lsp-linux-x86_64
+          path: |
+            dist/mlir-lsp-linux-x86_64.tar.gz
+            dist/mlir-lsp-linux-x86_64.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  macos:
+    name: macOS Apple Silicon
+    if: needs.source.outputs.should_build == 'true'
+    needs: source
+    runs-on: macos-15
+    timeout-minutes: 360
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+
+      - name: Require Apple Silicon
+        run: test "$(uname -m)" = arm64
+
+      - name: Restore Bazel caches
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/bazelisk
+            ~/.cache/mlir-lsp/bazel-disk
+            ~/.cache/mlir-lsp/repository
+          key: macos-arm64-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'WORKSPACE', 'workspace.bzl') }}
+          restore-keys: macos-arm64-bazel-
+
+      - name: Build and test
+        shell: bash
+        run: |
+          mkdir -p \
+            "${HOME}/.cache/mlir-lsp/bazel-disk" \
+            "${HOME}/.cache/mlir-lsp/repository"
+          bazelisk build --config=github_actions //:mlir-lsp
+          bazel-bin/mlir-lsp --help
+
+      - name: Inspect runtime dependencies
+        run: otool -L bazel-bin/mlir-lsp
+
+      - name: Package and smoke-test
+        shell: bash
+        run: |
+          ./scripts/package-release.sh \
+            macos-arm64 \
+            bazel-bin/mlir-lsp \
+            "${{ needs.source.outputs.commit }}" \
+            dist
+
+          (cd dist && shasum -a 256 -c mlir-lsp-macos-arm64.tar.gz.sha256)
+          smoke_dir="$(mktemp -d)"
+          trap 'rm -rf -- "${smoke_dir}"' EXIT
+          tar -xzf dist/mlir-lsp-macos-arm64.tar.gz -C "${smoke_dir}"
+          "${smoke_dir}/mlir-lsp-macos-arm64/mlir-lsp" --help
+
+      - name: Upload macOS release assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: mlir-lsp-macos-arm64
+          path: |
+            dist/mlir-lsp-macos-arm64.tar.gz
+            dist/mlir-lsp-macos-arm64.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14
 
   publish:
     name: Publish release
     if: github.event_name != 'workflow_dispatch' && needs.source.outputs.should_build == 'true'
-    needs: [source, build]
+    needs: [source, linux, macos]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

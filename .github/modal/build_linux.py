@@ -10,7 +10,6 @@ import modal
 # Leave headroom over the resource usage observed in initial release builds.
 CPU_CORES = 8.0
 MEMORY_MIB = 16 * 1024
-EPHEMERAL_DISK_MIB = 32 * 1024
 
 cache_volume = modal.Volume.from_name("mlir-lsp-bazel-cache", create_if_missing=True)
 
@@ -49,7 +48,6 @@ def run(command: list[str], cwd: pathlib.Path) -> None:
     image=build_image,
     cpu=CPU_CORES,
     memory=MEMORY_MIB,
-    ephemeral_disk=EPHEMERAL_DISK_MIB,
     timeout=6 * 60 * 60,
     volumes={"/cache": cache_volume},
 )
