@@ -7,11 +7,10 @@ import tempfile
 import modal
 
 
-# One worker is intentionally large enough for the LLVM/MLIR link while
-# remaining CPU-only.
-CPU_CORES = 32.0
-MEMORY_MIB = 128 * 1024
-EPHEMERAL_DISK_MIB = 1024 * 1024
+# Leave headroom over the resource usage observed in initial release builds.
+CPU_CORES = 8.0
+MEMORY_MIB = 16 * 1024
+EPHEMERAL_DISK_MIB = 32 * 1024
 
 cache_volume = modal.Volume.from_name("mlir-lsp-bazel-cache", create_if_missing=True)
 

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   checks:
-    name: Installer, formatting, and workflows
+    name: Formatting and workflows
     runs-on: ubuntu-24.04
 
     steps:
@@ -34,68 +34,3 @@ jobs:
 
       - name: Validate workflows
         uses: docker://rhysd/actionlint:1.7.7
-
-  release-assets:
-    name: Build release assets
-    if: github.event_name != 'pull_request'
-    needs: checks
-    uses: ./.github/workflows/build-release-assets.yml
-    with:
-      source_ref: ${{ github.sha }}
-    secrets: inherit
-
-  nightly:
-    name: Publish nightly prerelease
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: release-assets
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
-
-      - name: Download completed release assets
-        uses: actions/download-artifact@v6
-        with:
-          pattern: mlir-lsp-*
-          path: dist
-          merge-multiple: true
-
-      - name: Verify assets and source metadata
-        shell: bash
-        run: |
-          (cd dist && sha256sum -c -- ./*.sha256)
-          verify_dir="$(mktemp -d)"
-          trap 'rm -rf -- "${verify_dir}"' EXIT
-          for platform in linux-x86_64 macos-arm64; do
-            tar -xzf "dist/mlir-lsp-${platform}.tar.gz" -C "${verify_dir}"
-            test "$(< "${verify_dir}/mlir-lsp-${platform}/SOURCE_COMMIT")" = "${GITHUB_SHA}"
-          done
-
-      - name: Replace nightly prerelease
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          if gh release view nightly >/dev/null 2>&1; then
-            gh release delete nightly --yes
-          fi
-          git push origin --delete nightly 2>/dev/null || true
-          git tag --force nightly "${GITHUB_SHA}"
-          git push origin refs/tags/nightly
-
-          printf 'Rolling build from main.\n\nSource commit: %s\n' "${GITHUB_SHA}" \
-            > nightly-notes.md
-          gh release create nightly \
-            dist/*.tar.gz \
-            dist/*.sha256 \
-            --target "${GITHUB_SHA}" \
-            --title "Nightly" \
-            --notes-file nightly-notes.md \
-            --prerelease \
-            --latest=false

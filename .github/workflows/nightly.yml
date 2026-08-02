@@ -1,0 +1,102 @@
+name: Weekly nightly release
+
+on:
+  schedule:
+    - cron: "0 6 * * 0"
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Commit or ref to build (artifacts only; never publishes)
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-nightly
+  cancel-in-progress: false
+
+jobs:
+  source:
+    name: Resolve source commit
+    runs-on: ubuntu-24.04
+    outputs:
+      commit: ${{ steps.source.outputs.commit }}
+
+    steps:
+      - name: Check out requested source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || 'main' }}
+
+      - name: Record exact commit
+        id: source
+        run: echo "commit=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+  build:
+    name: Build release assets
+    needs: source
+    uses: ./.github/workflows/build-release-assets.yml
+    with:
+      source_ref: ${{ needs.source.outputs.commit }}
+    secrets: inherit
+
+  publish:
+    name: Replace nightly prerelease
+    if: github.event_name == 'schedule'
+    needs: [source, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      SOURCE_COMMIT: ${{ needs.source.outputs.commit }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+          fetch-depth: 0
+
+      - name: Download completed release assets
+        uses: actions/download-artifact@v6
+        with:
+          pattern: mlir-lsp-*
+          path: dist
+          merge-multiple: true
+
+      - name: Verify assets and source metadata
+        shell: bash
+        run: |
+          (cd dist && sha256sum -c -- ./*.sha256)
+          verify_dir="$(mktemp -d)"
+          trap 'rm -rf -- "${verify_dir}"' EXIT
+          for platform in linux-x86_64 macos-arm64; do
+            tar -xzf "dist/mlir-lsp-${platform}.tar.gz" -C "${verify_dir}"
+            test "$(< "${verify_dir}/mlir-lsp-${platform}/SOURCE_COMMIT")" = "${SOURCE_COMMIT}"
+          done
+
+      - name: Replace nightly prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view nightly >/dev/null 2>&1; then
+            gh release delete nightly --yes
+          fi
+          git push origin --delete nightly 2>/dev/null || true
+          git tag --force nightly "${SOURCE_COMMIT}"
+          git push origin refs/tags/nightly
+
+          printf 'Weekly rolling build from main.\n\nSource commit: %s\n' "${SOURCE_COMMIT}" \
+            > nightly-notes.md
+          gh release create nightly \
+            dist/*.tar.gz \
+            dist/*.sha256 \
+            --target "${SOURCE_COMMIT}" \
+            --title "Nightly" \
+            --notes-file nightly-notes.md \
+            --prerelease \
+            --latest=false
