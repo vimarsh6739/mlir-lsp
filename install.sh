@@ -18,8 +18,9 @@ install -m 755 \
 
 case "${source_mode}" in
   archive)
-    echo "Expunging the standalone Bazel output for the pinned Enzyme-JAX archive."
-    "${bazel_command}" clean --expunge
+    echo "Keeping the standalone Bazel output for the pinned Enzyme-JAX archive."
+    # Temporarily retain build artifacts while validating installs across platforms.
+    # "${bazel_command}" clean --expunge
     ;;
   override)
     echo "Keeping the standalone Bazel output for the local Enzyme-JAX override."
