@@ -20,7 +20,7 @@ local function setup_treesitter(opts)
     end,
   })
 
-  require('nvim-treesitter').install { 'mlir' }
+  require('nvim-treesitter').install({ 'mlir' })
 
   vim.api.nvim_create_autocmd('FileType', {
     group = group,
@@ -36,13 +36,13 @@ function M.setup(opts)
 
   if opts.lsp ~= false then
     local lsp = vim.tbl_deep_extend('force', {
-      cmd = { vim.fn.expand '~/.local/bin/mlir-lsp-server' },
+      cmd = { vim.fn.expand('~/.local/bin/mlir-lsp-server') },
       filetypes = { 'mlir' },
       root_markers = { '.git' },
     }, opts.lsp or {})
 
     vim.lsp.config('mlir_lsp_server', lsp)
-    vim.lsp.enable 'mlir_lsp_server'
+    vim.lsp.enable('mlir_lsp_server')
   end
 
   if opts.treesitter ~= false then
