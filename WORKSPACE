@@ -66,6 +66,7 @@ enzymexla_workspace()
 NEW_XLA_PATCHES = []
 
 LLVM_TARGETS = [
+    "AArch64",
     "AMDGPU",
     "NVPTX",
     "X86"
