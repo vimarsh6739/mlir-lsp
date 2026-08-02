@@ -1,67 +1,95 @@
-name: Release
+name: Stable release
 
 on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Commit or ref to build (artifacts only; never publishes)
+        required: true
+        default: main
+        type: string
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: stable-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  linux-x86_64:
-    name: Linux x86-64
-    runs-on: ubuntu-22.04
-    timeout-minutes: 360
+  source:
+    name: Resolve source commit
+    runs-on: ubuntu-24.04
+    outputs:
+      commit: ${{ steps.source.outputs.commit }}
 
     steps:
-      - name: Check out source
+      - name: Check out requested source
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref || inputs.source_ref }}
 
-      # This build's Bazel output base is large enough to exhaust the 14 GB
-      # available on a standard runner. Remove preinstalled tools that the
-      # release build does not use before fetching and compiling dependencies.
-      - name: Reclaim runner disk space
+      - name: Record exact commit
+        id: source
+        run: echo "commit=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+  build:
+    name: Build release assets
+    needs: source
+    uses: ./.github/workflows/build-release-assets.yml
+    with:
+      source_ref: ${{ needs.source.outputs.commit }}
+    secrets: inherit
+
+  publish:
+    name: Publish immutable stable release
+    if: github.event_name == 'push'
+    needs: [source, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      SOURCE_COMMIT: ${{ needs.source.outputs.commit }}
+
+    steps:
+      - name: Check out tagged commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+          fetch-depth: 0
+
+      - name: Download completed release assets
+        uses: actions/download-artifact@v6
+        with:
+          pattern: mlir-lsp-*
+          path: dist
+          merge-multiple: true
+
+      - name: Verify assets and source metadata
         shell: bash
         run: |
-          df -h /
-          sudo rm -rf \
-            /opt/ghc \
-            /opt/hostedtoolcache/CodeQL \
-            /usr/local/.ghcup \
-            /usr/local/lib/android \
-            /usr/local/share/powershell \
-            /usr/share/dotnet
-          docker image prune --all --force
-          sudo apt-get clean
-          df -h /
+          (cd dist && sha256sum -c *.sha256)
+          verify_dir="$(mktemp -d)"
+          trap 'rm -rf -- "${verify_dir}"' EXIT
+          for platform in linux-x86_64 macos-arm64; do
+            tar -xzf "dist/mlir-lsp-${platform}.tar.gz" -C "${verify_dir}"
+            test "$(< "${verify_dir}/mlir-lsp-${platform}/SOURCE_COMMIT")" = "${SOURCE_COMMIT}"
+          done
 
-      - name: Build mlir-lsp-server
-        run: bazelisk build //:mlir-lsp-server
-
-      - name: Package release
-        shell: bash
-        run: |
-          artifact="mlir-lsp-${GITHUB_REF_NAME}-linux-x86_64"
-
-          mkdir -p "dist/${artifact}"
-          install -m 0755 \
-            bazel-bin/mlir-lsp-server \
-            "dist/${artifact}/mlir-lsp-server"
-          cp README.md LICENSE "dist/${artifact}/"
-
-          tar -C dist -czf "dist/${artifact}.tar.gz" "${artifact}"
-          cd dist
-          sha256sum "${artifact}.tar.gz" \
-            > "${artifact}.tar.gz.sha256"
-
-      - name: Publish GitHub release
+      - name: Publish stable release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${GITHUB_REF_NAME}" \
-            dist/*.tar.gz \
-            dist/*.sha256 \
+            dist/mlir-lsp-linux-x86_64.tar.gz \
+            dist/mlir-lsp-linux-x86_64.tar.gz.sha256 \
+            dist/mlir-lsp-macos-arm64.tar.gz \
+            dist/mlir-lsp-macos-arm64.tar.gz.sha256 \
             --verify-tag \
             --generate-notes \
-            --title "${GITHUB_REF_NAME}"
+            --notes "Source commit: ${SOURCE_COMMIT}" \
+            --title "${GITHUB_REF_NAME}" \
+            --latest

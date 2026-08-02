@@ -19,23 +19,21 @@ Dialects supported:
 
 ## Install
 
-Install `bazelisk`.
+The default install path is `$HOME/.local/bin`.
 
 ```bash
-git clone https://github.com/vimarsh6739/mlir-lsp.git
-cd mlir-lsp && ./install.sh
+curl -fsSL https://raw.githubusercontent.com/vimarsh6739/mlir-lsp/main/install.sh | bash
 ```
 
-The installer builds an optimized binary and writes it to
-`~/.local/bin/mlir-lsp-server`. Override the destination when needed:
+You can modify this path using `INSTALL_PREFIX`:
 
-```sh
-INSTALL_PREFIX="$HOME/bin" ./install.sh
+```bash
+curl -fsSL https://raw.githubusercontent.com/vimarsh6739/mlir-lsp/main/install.sh | INSTALL_PREFIX="$HOME/bin" bash
 ```
 
 ## Neovim
 
-Ensure you have neovim 0.12+. Install with `Lazy`
+Neovim 0.11+ with Lazy:
 
 ```lua
 {
@@ -48,13 +46,11 @@ Ensure you have neovim 0.12+. Install with `Lazy`
 }
 ```
 
-If you want to specify a custom lsp server
+With a custom server path:
 
 ```lua
 require('mlir_lsp').setup {
-  lsp = {
-    cmd = { '/custom/path/mlir-lsp-server' },
-  },
+  cmd = { '/custom/path/mlir-lsp' },
 }
 ```
 
@@ -64,6 +60,6 @@ Install LLVM's MLIR extension and set the server path:
 
 ```json
 {
-  "mlir.server_path": "/home/you/.local/bin/mlir-lsp-server"
+  "mlir.server_path": "/home/you/.local/bin/mlir-lsp"
 }
 ```

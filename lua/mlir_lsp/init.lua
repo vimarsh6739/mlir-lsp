@@ -1,18 +1,15 @@
 local M = {}
 
 function M.setup(opts)
-  opts = opts or {}
+  local defaults = {
+    cmd = { 'mlir-lsp' },
+    filetypes = { 'mlir' },
+    workspace_required = false,
+    root_markers = { '.git' },
+  }
 
-  if opts.lsp ~= false then
-    local lsp = vim.tbl_deep_extend('force', {
-      cmd = { vim.fn.expand('~/.local/bin/mlir-lsp-server') },
-      filetypes = { 'mlir' },
-      root_markers = { '.git' },
-    }, opts.lsp or {})
-
-    vim.lsp.config('mlir_lsp_server', lsp)
-    vim.lsp.enable('mlir_lsp_server')
-  end
+  vim.lsp.config('mlir_lsp', vim.tbl_deep_extend('force', defaults, opts or {}))
+  vim.lsp.enable('mlir_lsp')
 end
 
 return M
