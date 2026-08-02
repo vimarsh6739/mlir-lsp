@@ -113,8 +113,6 @@ jobs:
     needs: source
     runs-on: macos-15
     timeout-minutes: 360
-    env:
-      BAZEL_CACHE_ROOT: ${{ github.workspace }}/.bazel-cache
 
     steps:
       - name: Check out source
@@ -125,25 +123,9 @@ jobs:
       - name: Require Apple Silicon
         run: test "$(uname -m)" = arm64
 
-      - name: Restore Bazel caches
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cache/bazelisk
-            ${{ env.BAZEL_CACHE_ROOT }}
-          key: macos-arm64-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'WORKSPACE', 'workspace.bzl') }}
-          restore-keys: macos-arm64-bazel-
-
       - name: Build and test
-        shell: bash
         run: |
-          mkdir -p \
-            "${BAZEL_CACHE_ROOT}/bazel-disk" \
-            "${BAZEL_CACHE_ROOT}/repository"
-          bazelisk build \
-            --disk_cache="${BAZEL_CACHE_ROOT}/bazel-disk" \
-            --repository_cache="${BAZEL_CACHE_ROOT}/repository" \
-            //:mlir-lsp
+          bazelisk build //:mlir-lsp
           bazel-bin/mlir-lsp --help
 
       - name: Inspect runtime dependencies
