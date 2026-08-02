@@ -1,3 +1,5 @@
+load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_binary(
@@ -13,4 +15,9 @@ cc_binary(
         "@stablehlo//:interpreter_ops",
         "@stablehlo//stablehlo/tests:check_ops",
     ],
+)
+
+refresh_compile_commands(
+    name = "refresh_compile_commands",
+    targets = ["//:mlir-lsp-server"],
 )

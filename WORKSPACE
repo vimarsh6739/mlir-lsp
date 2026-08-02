@@ -312,13 +312,13 @@ nvshmem_redist_init_repository(
     nvshmem_redistributions = NVSHMEM_REDISTRIBUTIONS,
 )
 
-# Enzyme-JAX's root BUILD file loads these helpers unconditionally.
-http_archive(
-    name = "hedron_compile_commands",
-    sha256 = "0bc358dd0627169409ae48be6b431509c13d3150ad15cd18555bac2db17cca24",
-    strip_prefix = "bazel-compile-commands-extractor-359a657680aa74d2a70240bb310c1636601e0af8",
-    url = "https://github.com/vimarsh6739/bazel-compile-commands-extractor/archive/359a657680aa74d2a70240bb310c1636601e0af8.tar.gz",
+# Reuse the Hedron revision selected by Enzyme-JAX's Enzyme dependency.
+load(
+    "@enzyme//third_party/hedron_compile_commands:workspace.bzl",
+    hedron_compile_commands_workspace = "repo",
 )
+
+hedron_compile_commands_workspace()
 
 load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
 
