@@ -72,9 +72,9 @@ def build_linux(source_commit: str, run_id: str) -> list[str]:
             "--repository_cache=/cache/repository",
         ]
         run(["bazelisk", "build", *bazel_cache_flags, "//:mlir-lsp"], source)
-        run(["bazelisk", "test", *bazel_cache_flags, "//..."], source)
 
         binary = source / "bazel-bin/mlir-lsp"
+        run([str(binary), "--help"], source)
         dependencies = subprocess.check_output(["ldd", binary], text=True)
         print(dependencies, flush=True)
         if "not found" in dependencies:

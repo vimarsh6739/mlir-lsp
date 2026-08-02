@@ -71,7 +71,7 @@ jobs:
       - name: Verify assets and source metadata
         shell: bash
         run: |
-          (cd dist && sha256sum -c *.sha256)
+          (cd dist && sha256sum -c -- ./*.sha256)
           verify_dir="$(mktemp -d)"
           trap 'rm -rf -- "${verify_dir}"' EXIT
           for platform in linux-x86_64 macos-arm64; do

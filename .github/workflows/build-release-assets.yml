@@ -108,7 +108,7 @@ jobs:
             "--repository_cache=${HOME}/.cache/mlir-lsp/repository"
           )
           bazelisk build "${cache_flags[@]}" //:mlir-lsp
-          bazelisk test "${cache_flags[@]}" //...
+          bazel-bin/mlir-lsp --help
 
       - name: Inspect runtime dependencies
         run: otool -L bazel-bin/mlir-lsp

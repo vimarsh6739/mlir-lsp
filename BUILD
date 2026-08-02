@@ -1,5 +1,4 @@
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,10 +20,4 @@ cc_binary(
 refresh_compile_commands(
     name = "refresh_compile_commands",
     targets = ["//:mlir-lsp"],
-)
-
-sh_test(
-    name = "mlir-lsp-help-test",
-    srcs = ["tests/mlir-lsp-help-test.sh"],
-    data = [":mlir-lsp"],
 )
