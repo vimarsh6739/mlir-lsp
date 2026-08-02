@@ -33,13 +33,10 @@ cd mlir-lsp
 ```
 
 The installer builds an optimized binary and writes it to
-`~/.local/bin/mlir-lsp-server`. It reuses an existing installation by default;
-pass `--force` when you explicitly want to rebuild it. Override either tool or
-destination when needed:
+`~/.local/bin/mlir-lsp-server`. Override either tool or destination when needed:
 
 ```sh
-./install.sh --force
-BAZEL=bazelisk INSTALL_DIR="$HOME/bin" ./install.sh --force
+BAZEL=bazelisk INSTALL_DIR="$HOME/bin" ./install.sh
 ```
 
 To build without installing:
@@ -49,7 +46,8 @@ bazel build --config=public_cache //:mlir-lsp-server
 ./bazel-bin/mlir-lsp-server --help
 ```
 
-Build outputs are retained for fast incremental updates.
+Build outputs are retained for fast incremental updates. The installer shuts
+down its Bazel server when it finishes.
 
 ### Local Enzyme-JAX development
 
@@ -58,7 +56,7 @@ checkout, then refresh its copied repository after source changes:
 
 ```sh
 bazel sync --only=enzyme_ad
-./install.sh --force
+./install.sh
 ```
 
 Clear the override to return to the pinned archive.
