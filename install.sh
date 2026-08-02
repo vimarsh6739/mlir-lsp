@@ -14,7 +14,6 @@ esac
 version="${MLIR_LSP_VERSION:-latest}"
 case "${version}" in
   latest) release_path="latest/download" ;;
-  nightly) release_path="download/nightly" ;;
   *[!A-Za-z0-9._-]*)
     printf 'Invalid MLIR_LSP_VERSION: %s\n' "${version}" >&2
     exit 1

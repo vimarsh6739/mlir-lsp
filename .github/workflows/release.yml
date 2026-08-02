@@ -1,6 +1,8 @@
-name: Stable release
+name: Release
 
 on:
+  schedule:
+    - cron: "0 6 * * 0"
   push:
     tags:
       - "v*.*.*"
@@ -16,28 +18,56 @@ permissions:
   contents: read
 
 concurrency:
-  group: stable-release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
   source:
-    name: Resolve source commit
+    name: Resolve source and version
     runs-on: ubuntu-24.04
     outputs:
       commit: ${{ steps.source.outputs.commit }}
+      should_build: ${{ steps.source.outputs.should_build }}
+      tag: ${{ steps.source.outputs.tag }}
 
     steps:
       - name: Check out requested source
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'push' && github.ref || inputs.source_ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || github.ref }}
+          fetch-depth: 0
 
-      - name: Record exact commit
+      - name: Resolve source and version
         id: source
-        run: echo "commit=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+        shell: bash
+        run: |
+          commit="$(git rev-parse HEAD)"
+          tag=""
+          should_build=true
+
+          if [[ "${GITHUB_EVENT_NAME}" == schedule ]]; then
+            latest="$(git tag --list 'v0.1.*' --sort=-version:refname | awk '/^v0\.1\.[0-9]+$/{print; exit}')"
+            if [[ -n "${latest}" && "$(git rev-list -n 1 "${latest}")" == "${commit}" ]]; then
+              tag="${latest}"
+              should_build=false
+            elif [[ "${latest}" =~ ^v0\.1\.([0-9]+)$ ]]; then
+              tag="v0.1.$((BASH_REMATCH[1] + 1))"
+            else
+              tag="v0.1.0"
+            fi
+          elif [[ "${GITHUB_EVENT_NAME}" == push ]]; then
+            tag="${GITHUB_REF_NAME}"
+          fi
+
+          {
+            echo "commit=${commit}"
+            echo "should_build=${should_build}"
+            echo "tag=${tag}"
+          } >> "${GITHUB_OUTPUT}"
 
   build:
     name: Build release assets
+    if: needs.source.outputs.should_build == 'true'
     needs: source
     uses: ./.github/workflows/build-release-assets.yml
     with:
@@ -45,14 +75,15 @@ jobs:
     secrets: inherit
 
   publish:
-    name: Publish immutable stable release
-    if: github.event_name == 'push'
+    name: Publish release
+    if: github.event_name != 'workflow_dispatch' && needs.source.outputs.should_build == 'true'
     needs: [source, build]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     env:
       GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ needs.source.outputs.tag }}
       SOURCE_COMMIT: ${{ needs.source.outputs.commit }}
 
     steps:
@@ -63,14 +94,20 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish stable release
+      - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            dist/* \
-            --verify-tag \
-            --generate-notes \
-            --notes "Source commit: ${SOURCE_COMMIT}" \
-            --title "${GITHUB_REF_NAME}" \
+          args=(
+            --generate-notes
             --latest
+            --notes "Source commit: ${SOURCE_COMMIT}"
+            --title "${RELEASE_TAG}"
+          )
+          if [[ "${GITHUB_EVENT_NAME}" == push ]]; then
+            args+=(--verify-tag)
+          else
+            args+=(--target "${SOURCE_COMMIT}")
+          fi
+          gh release create "${RELEASE_TAG}" dist/* "${args[@]}"
