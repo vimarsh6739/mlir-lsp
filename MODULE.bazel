@@ -1,0 +1,41 @@
+module(name = "mlir_lsp")
+
+# Keep these versions aligned with the JAX revision selected by Enzyme-JAX.
+bazel_dep(name = "abseil-cpp", version = "20260526.0", repo_name = "com_google_absl")
+bazel_dep(name = "bazel_features", version = "1.36.0")
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "protobuf", version = "32.1", repo_name = "com_google_protobuf")
+bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "rules_shell", version = "0.6.1")
+
+# Unify Bazel's built-in proto toolchain with the JAX/XLA versions. These
+# overrides intentionally carry no source patches.
+single_version_override(
+    module_name = "abseil-cpp",
+    version = "20260526.0",
+)
+
+single_version_override(
+    module_name = "protobuf",
+    version = "32.1",
+)
+
+# Legacy XLA repositories resolve this through the root repository mapping.
+cc_compatibility = use_extension(
+    "@rules_cc//cc:extensions.bzl",
+    "compatibility_proxy",
+)
+use_repo(cc_compatibility, "cc_compatibility_proxy")
+
+# Legacy WORKSPACE repositories need these module-generated repositories in
+# the root repository mapping.
+bazel_features_version = use_extension(
+    "@bazel_features//private:extensions.bzl",
+    "version_extension",
+)
+use_repo(
+    bazel_features_version,
+    "bazel_features_globals",
+    "bazel_features_version",
+)
