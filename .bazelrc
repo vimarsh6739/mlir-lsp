@@ -1,12 +1,6 @@
 common --repo_env=USE_PYWRAP_RULES=True
 common --experimental_repo_remote_exec
 
-# CI caches live on persistent Modal and GitHub runner storage.
-common:modal --disk_cache=/cache/bazel-disk
-common:modal --repository_cache=/cache/repository
-common:github_actions --disk_cache=~/.cache/mlir-lsp/bazel-disk
-common:github_actions --repository_cache=~/.cache/mlir-lsp/repository
-
 build --announce_rc
 build --cxxopt=-std=c++17 --host_cxxopt=-std=c++17
 build --cxxopt=-w --host_cxxopt=-w

@@ -113,6 +113,8 @@ jobs:
     needs: source
     runs-on: macos-15
     timeout-minutes: 360
+    env:
+      BAZEL_CACHE_ROOT: ${{ github.workspace }}/.bazel-cache
 
     steps:
       - name: Check out source
@@ -128,8 +130,7 @@ jobs:
         with:
           path: |
             ~/.cache/bazelisk
-            ~/.cache/mlir-lsp/bazel-disk
-            ~/.cache/mlir-lsp/repository
+            ${{ env.BAZEL_CACHE_ROOT }}
           key: macos-arm64-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'WORKSPACE', 'workspace.bzl') }}
           restore-keys: macos-arm64-bazel-
 
@@ -137,9 +138,12 @@ jobs:
         shell: bash
         run: |
           mkdir -p \
-            "${HOME}/.cache/mlir-lsp/bazel-disk" \
-            "${HOME}/.cache/mlir-lsp/repository"
-          bazelisk build --config=github_actions //:mlir-lsp
+            "${BAZEL_CACHE_ROOT}/bazel-disk" \
+            "${BAZEL_CACHE_ROOT}/repository"
+          bazelisk build \
+            --disk_cache="${BAZEL_CACHE_ROOT}/bazel-disk" \
+            --repository_cache="${BAZEL_CACHE_ROOT}/repository" \
+            //:mlir-lsp
           bazel-bin/mlir-lsp --help
 
       - name: Inspect runtime dependencies
