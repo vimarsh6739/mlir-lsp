@@ -16,7 +16,7 @@ EPHEMERAL_DISK_MIB = 1024 * 1024
 cache_volume = modal.Volume.from_name("mlir-lsp-bazel-cache", create_if_missing=True)
 
 build_image = (
-    modal.Image.from_registry("ubuntu:20.04", add_python="3.11")
+    modal.Image.from_registry("ubuntu:24.04", add_python="3.11")
     .apt_install(
         "build-essential",
         "ca-certificates",
