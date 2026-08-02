@@ -67,11 +67,7 @@ def build_linux(source_commit: str, run_id: str) -> list[str]:
         extract = temp_path / "extract"
         shutil.copytree("/src", source, symlinks=True)
 
-        bazel_cache_flags = [
-            "--disk_cache=/cache/bazel-disk",
-            "--repository_cache=/cache/repository",
-        ]
-        run(["bazelisk", "build", *bazel_cache_flags, "//:mlir-lsp"], source)
+        run(["bazelisk", "build", "--config=modal", "//:mlir-lsp"], source)
 
         binary = source / "bazel-bin/mlir-lsp"
         run([str(binary), "--help"], source)

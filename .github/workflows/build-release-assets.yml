@@ -103,11 +103,7 @@ jobs:
           mkdir -p \
             "${HOME}/.cache/mlir-lsp/bazel-disk" \
             "${HOME}/.cache/mlir-lsp/repository"
-          cache_flags=(
-            "--disk_cache=${HOME}/.cache/mlir-lsp/bazel-disk"
-            "--repository_cache=${HOME}/.cache/mlir-lsp/repository"
-          )
-          bazelisk build "${cache_flags[@]}" //:mlir-lsp
+          bazelisk build --config=github_actions //:mlir-lsp
           bazel-bin/mlir-lsp --help
 
       - name: Inspect runtime dependencies
