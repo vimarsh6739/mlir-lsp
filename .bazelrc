@@ -1,3 +1,6 @@
+common --enable_workspace
+# Legacy Go SDK rules contain globs that are empty with newer SDKs.
+common --noincompatible_disallow_empty_glob
 common --repo_env=USE_PYWRAP_RULES=True
 common --experimental_repo_remote_exec
 

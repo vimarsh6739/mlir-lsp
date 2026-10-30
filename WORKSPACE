@@ -30,10 +30,6 @@ enzyme_workspace()
 
 cuda_tile_workspace("@enzyme_ad")
 
-load("@jax//third_party/xla:workspace.bzl", jax_xla_workspace = "repo")
-
-jax_xla_workspace()
-
 load("@xla//:workspace4.bzl", "xla_workspace4")
 
 xla_workspace4()
@@ -62,6 +58,7 @@ python_init_repositories(
         "3.11": "@enzyme_ad//builddeps:requirements_lock_3_11.txt",
         "3.12": "@enzyme_ad//builddeps:requirements_lock_3_12.txt",
         "3.13": "@enzyme_ad//builddeps:requirements_lock_3_13.txt",
+        "3.14": "@enzyme_ad//builddeps:requirements_lock_3_14.txt",
     },
 )
 
@@ -100,7 +97,7 @@ load("@xla//:workspace0.bzl", "xla_workspace0")
 
 xla_workspace0()
 
-load("@jax//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
+load("@enzyme_ad//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
 
 flatbuffers()
 
@@ -260,3 +257,7 @@ hedron_compile_commands_setup_transitive_transitive()
 load("@hedron_compile_commands//:workspace_setup_transitive_transitive_transitive.bzl", "hedron_compile_commands_setup_transitive_transitive_transitive")
 
 hedron_compile_commands_setup_transitive_transitive_transitive()
+
+load("@enzyme_ad//third_party/z3:workspace.bzl", z3_workspace = "repo")
+
+z3_workspace()

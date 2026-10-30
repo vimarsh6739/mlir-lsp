@@ -20,5 +20,7 @@ int main(int argc, char **argv) {
   registry.insert<mlir::stablehlo::check::CheckDialect>();
   registry.insert<mlir::stablehlo::interpreter::InterpreterDialect>();
 
+  mlir::enzyme::registerInterfaces(registry);
+
   return mlir::failed(mlir::MlirLspServerMain(argc, argv, registry));
 }
